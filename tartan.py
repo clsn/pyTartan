@@ -242,12 +242,50 @@ class Tartan:
         w*=self.unit
         return (w*reps, h*reps)
 
+
+def readThreadCountInfo(unit, asym, reps, divisor):
+    # Read in and work directly from a tartanregister.gov.uk threadcount
+    # response
+    cols={}
+    for line in sys.stdin:
+        if line.startswith('Threadcount'):
+            l=line.split(':')
+            threads=l[1].strip()
+        elif line.startswith('Pallet'):
+            l=line.split(':')
+            pal=l[1].strip()
+            l=pal.split(';')
+            for col in l:
+                m=re.match(r'([A-Za-z]+)=([0-9a-fA-F]{6})',col)
+                if not m:
+                    continue
+                cols[m.group(1)]='#%s'%m.group(2)
+
+    tar=Tartan(width=300, height=300, asymmetrical=asym, unit=unit)
+    if divisor:
+        tar.divisor=divisor
+    # Do them individually; replacing on the whole string might get caught
+    # in some of the hex strings
+    thr=re.findall(r'[a-zA-Z]+\d+',threads)
+    for t in thr:
+        m=re.match(r'[a-zA-Z]+',t)
+        out=t.replace(m.group(0),'(%s)'%cols[m.group(0)])
+        tar.addHorizStripe(out)
+        tar.addVertStripe(out)
+    dim=tar.computeDims(reps)
+    tar.setdims(*dim)
+    tar.assembleAll()
+    
+    print tar.xml()
+
+
+
 if __name__=='__main__':
     
     import sys
     from getopt import getopt
 
-    (opts, args)=getopt(sys.argv[1:],'d:r:u:a')
+    (opts, args)=getopt(sys.argv[1:],'d:r:u:aR')
     divisor=None
     reps=2
     unit=2
@@ -262,6 +300,9 @@ if __name__=='__main__':
             unit=int(v)
         elif k.endswith('a'):
             asym=True
+        elif k.endswith('R'):
+            readThreadCountInfo(unit, asym, reps, divisor)
+            exit(0)
     s=" ".join(args)
     if not s:
         s="R96 W8 B8 BK8 R24 B8 R2 Y8"
