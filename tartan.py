@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from xml.dom.minidom import getDOMImplementation
 import re
 
@@ -89,7 +91,12 @@ class Tartan:
             'Glr' : '#daa520',  # goldenrod
             'Wh' : '#f5deb3'    # wheat
             }
-        return standards.get(s,s)
+        try:
+            return standards[s]
+        except KeyError:
+            if s.startswith("("):
+                return s[1:-1]  # trim parens
+            return s
 
     def convertWidth(self, wid):
         # Convert the width of a stripe.
@@ -156,7 +163,7 @@ class Tartan:
         d.setAttribute("viewBox", "0 0 %d %d"%(width, height))
         d.setAttribute("x","0")
         d.setAttribute("y","0")
-        self.re=re.compile(r'([a-zA-Z]+|#[0-9a-fA-F]{6})(\d+)')
+        self.re=re.compile(r'([a-zA-Z]+|\(.*?\))(\d+)')
         self.defs=self.dom.createElement("defs")
         d.appendChild(self.defs)
         self.horiz=[]
@@ -215,7 +222,7 @@ class Tartan:
         return self.svg.toprettyxml()
 
     def symStripes(self, stripes):
-        for s in stripes.split():
+        for s in re.findall(r'(?:[A-Za-z]+|\(.*?\))\d+',stripes):
             self.addHorizStripe(s)
             self.addVertStripe(s)
 
