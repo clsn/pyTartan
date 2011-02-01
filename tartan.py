@@ -56,19 +56,24 @@ class Tartan:
 
     @staticmethod
     def str2color(s):
+        # see http://www.tartanregister.gov.uk/guidance.aspx
         standards={
             'B' : '#0000cd',    # blue
             'DB' : '#000080',   # dark blue (navy)
             'R' : 'red',
             'G' : '#228b22',    # green (forestgreen)
-            'Y' : 'yellow',
+            'Y' : '#fee600',
             #'BK' : 'black',
             'BK' : '#101010',
+            'K' : '#101010',
             'W' : 'white',
             'AZ' : '#87ceeb',   # sky blue
             'BR' : '#a52a2a',   # brown
             'CR' : '#b22222',   # crimson (firebrick)
-            'GY' : '#bebebe',   # grey
+            # 'GY' : '#bebebe',   # grey
+            'GY' : '#666666',   # grey
+            'N'  : '#666666',
+            'T' : '#603311',
             'LG' : '#98fb98',   # light green
             'PU' : '#dda0dd',   # plum
             'Lil' : '#da70d6',  # lilac (orchid)
@@ -134,7 +139,7 @@ class Tartan:
             self.gradientCache[(color,bool(prime))]=g.getAttribute('id')
             return g.getAttribute('id')
 
-    def __init__(self, width=100, height=100, unit=2):
+    def __init__(self, width=100, height=100, unit=2, asymmetrical=False):
         impl=getDOMImplementation()
         self.dom=impl.createDocument(None,'svg',None)
         d=self.dom.documentElement
@@ -143,10 +148,11 @@ class Tartan:
         self.unit=unit
         self.gradientCache={}
         self.svg=self.dom.documentElement
+        self.asymmetrical=asymmetrical
         d.setAttribute("xmlns","http://www.w3.org/2000/svg")
         d.setAttribute("xmlns:xlink","http://www.w3.org/1999/xlink")
-        d.setAttribute("height","10cm") # ??
-        d.setAttribute("width", "10cm")
+        d.setAttribute("height","%dpx"%height) # ??
+        d.setAttribute("width", "%dpx"%width)
         d.setAttribute("viewBox", "0 0 %d %d"%(width, height))
         d.setAttribute("x","0")
         d.setAttribute("y","0")
@@ -173,31 +179,37 @@ class Tartan:
         self.vert.append(spec)
 
     def assembleAll(self):
-        h=0
-        i=0
-        dr= +1
-        while h<self.height:
-            strip=self.horiz[i]
-            r=self.makeHorizStripe(strip)
-            r.setAttribute('y',str(h))
-            h+=int(r.getAttribute('height'))
-            self.svg.appendChild(r)
-            if i+dr >= len(self.horiz) or i+dr < 0:
-                # I just hit the end.
-                dr *= -1
-            i+=dr
-        i=0
-        w=0
-        dr= +1
-        while w<self.width:
-            strip=self.vert[i]
-            r=self.makeVertStripe(strip)
-            r.setAttribute('x',str(w))
-            w+=int(r.getAttribute('width'))
-            self.svg.appendChild(r)
-            if i+dr >= len(self.vert) or i+dr < 0:
-                dr *= -1
-            i+=dr
+        for align in ('h', 'w'):
+            if align=='h':
+                maker=self.makeHorizStripe
+                setattrib='y'
+                getattrib='height'
+                array=self.horiz
+                array.reverse() # We build these stripes the wrong way!
+                # the y axis is upside-down or something.
+                lim=self.height
+            else:
+                maker=self.makeVertStripe
+                setattrib='x'
+                getattrib='width'
+                array=self.vert
+                lim=self.width
+            i=0
+            a=0
+            dr= +1
+            while a<lim:
+                strip=array[i]
+                r=maker(strip)
+                r.setAttribute(setattrib,str(a))
+                a+=int(r.getAttribute(getattrib))
+                self.svg.appendChild(r)
+                if i+dr >= len(array) or i+dr < 0:
+                    # I just hit the end.
+                    if self.asymmetrical:
+                        i=0
+                        continue
+                    dr *= -1
+                i+=dr
 
     def xml(self):
         return self.svg.toprettyxml()
@@ -228,10 +240,11 @@ if __name__=='__main__':
     import sys
     from getopt import getopt
 
-    (opts, args)=getopt(sys.argv[1:],'d:r:u:')
+    (opts, args)=getopt(sys.argv[1:],'d:r:u:a')
     divisor=None
     reps=2
     unit=2
+    asym=False
     # print str(opts)
     for (k,v) in opts:
         if k.endswith('d'):
@@ -240,10 +253,12 @@ if __name__=='__main__':
             reps=int(v)
         elif k.endswith('u'):
             unit=int(v)
+        elif k.endswith('a'):
+            asym=True
     s=" ".join(args)
     if not s:
         s="R96 W8 B8 BK8 R24 B8 R2 Y8"
-    t=Tartan(width=300, height=300, unit=unit)
+    t=Tartan(width=300, height=300, unit=unit, asymmetrical=asym)
     if divisor:
         t.divisor=divisor
     t.symStripes(s)
