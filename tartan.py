@@ -222,9 +222,11 @@ class Tartan:
         return (w*reps, h*reps)
 
 t=Tartan(width=300, height=300, unit=2)
-#t.symStripes("B6 W2 BK2 W2 G10")
-t.symStripes("R96 W8 B8 BK8 R24 B8 R2 Y8")
-#t.symStripes("BK2 W2")
+import sys
+s=" ".join(sys.argv[1:])
+if not s:
+    s="R96 W8 B8 BK8 R24 B8 R2 Y8"
+t.symStripes(s)
 dim=t.computeDims(3)
 t.setdims(*dim)
 t.assembleAll()
