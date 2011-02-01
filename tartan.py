@@ -85,6 +85,13 @@ class Tartan:
             'Wh' : '#f5deb3'    # wheat
             }
         return standards.get(s,'white')
+
+    def convertWidth(self, wid):
+        # Convert the width of a stripe.
+        if hasattr(self, 'divisor'):
+            wid /= self.divisor
+        wid *= self.unit
+        return wid
     
     def makeHorizStripe(self, spec):
         m=self.re.match(spec)
@@ -95,7 +102,8 @@ class Tartan:
         # y should anyway.
         r.setAttribute("x","0")
         r.setAttribute("width","100%")
-        r.setAttribute("height",m.group(2))
+        h=self.convertWidth(int(m.group(2)))
+        r.setAttribute("height",str(h))
         gID=self.gradID(self.str2color(m.group(1)),prime=False)
         r.setAttribute("fill","url(#%s)"%gID)
         return r
@@ -110,7 +118,8 @@ class Tartan:
         r=self.dom.createElement('rect')
         r.setAttribute('y','0')
         r.setAttribute('height','100%')
-        r.setAttribute('width',m.group(2))
+        w=self.convertWidth(int(m.group(2)))
+        r.setAttribute('width',str(w))
         gID=self.gradID(self.str2color(m.group(1)),prime=True)
         r.setAttribute('fill','url(#%s)'%gID)
         return r
@@ -147,6 +156,13 @@ class Tartan:
         self.horiz=[]
         self.vert=[]
 
+        
+    def setdims(self, width, height):
+        # I can reset the viewbox, right?
+        self.width=width
+        self.height=height
+        self.svg.setAttribute('viewBox','0 0 %d %d'%(width, height))
+    
     def addHorizStripe(self, spec):
         # just collect the stripes, mkay?
         self.horiz.append(spec)
@@ -189,9 +205,28 @@ class Tartan:
             self.addHorizStripe(s)
             self.addVertStripe(s)
 
-t=Tartan(width=300, height=300, unit=1)
+    def computeDims(self, reps=2):
+        w=0
+        h=0
+        for strip in self.horiz:
+            m=self.re.match(strip)
+            h+=int(m.group(2))
+        for strip in self.vert:
+            m=self.re.match(strip)
+            w+=int(m.group(2))
+        if hasattr(self, 'divisor'):
+            h/=self.divisor
+            w/=self.divisor
+        h*=self.unit
+        w*=self.unit
+        return (w*reps, h*reps)
+
+t=Tartan(width=300, height=300, unit=2)
 #t.symStripes("B6 W2 BK2 W2 G10")
 t.symStripes("R96 W8 B8 BK8 R24 B8 R2 Y8")
+#t.symStripes("BK2 W2")
+dim=t.computeDims(3)
+t.setdims(*dim)
 t.assembleAll()
 
 print t.xml()
