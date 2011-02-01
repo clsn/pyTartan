@@ -162,6 +162,8 @@ class Tartan:
         self.width=width
         self.height=height
         self.svg.setAttribute('viewBox','0 0 %d %d'%(width, height))
+        self.svg.setAttribute('width','%dpx'%width)
+        self.svg.setAttribute('height','%dpx'%height)
     
     def addHorizStripe(self, spec):
         # just collect the stripes, mkay?
@@ -221,14 +223,32 @@ class Tartan:
         w*=self.unit
         return (w*reps, h*reps)
 
-t=Tartan(width=300, height=300, unit=2)
-import sys
-s=" ".join(sys.argv[1:])
-if not s:
-    s="R96 W8 B8 BK8 R24 B8 R2 Y8"
-t.symStripes(s)
-dim=t.computeDims(3)
-t.setdims(*dim)
-t.assembleAll()
+if __name__=='__main__':
+    
+    import sys
+    from getopt import getopt
 
-print t.xml()
+    (opts, args)=getopt(sys.argv[1:],'d:r:u:')
+    divisor=None
+    reps=2
+    unit=2
+    # print str(opts)
+    for (k,v) in opts:
+        if k.endswith('d'):
+            divisor=int(v)
+        elif k.endswith('r'):
+            reps=int(v)
+        elif k.endswith('u'):
+            unit=int(v)
+    s=" ".join(args)
+    if not s:
+        s="R96 W8 B8 BK8 R24 B8 R2 Y8"
+    t=Tartan(width=300, height=300, unit=unit)
+    if divisor:
+        t.divisor=divisor
+    t.symStripes(s)
+    dim=t.computeDims(reps)
+    t.setdims(*dim)
+    t.assembleAll()
+    
+    print t.xml()
