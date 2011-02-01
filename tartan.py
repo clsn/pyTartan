@@ -89,7 +89,7 @@ class Tartan:
             'Glr' : '#daa520',  # goldenrod
             'Wh' : '#f5deb3'    # wheat
             }
-        return standards.get(s,'white')
+        return standards.get(s,s)
 
     def convertWidth(self, wid):
         # Convert the width of a stripe.
@@ -156,7 +156,7 @@ class Tartan:
         d.setAttribute("viewBox", "0 0 %d %d"%(width, height))
         d.setAttribute("x","0")
         d.setAttribute("y","0")
-        self.re=re.compile(r'([a-zA-Z]+)(\d+)')
+        self.re=re.compile(r'([a-zA-Z]+|#[0-9a-fA-F]{6})(\d+)')
         self.defs=self.dom.createElement("defs")
         d.appendChild(self.defs)
         self.horiz=[]
