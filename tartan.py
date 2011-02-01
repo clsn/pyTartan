@@ -10,7 +10,9 @@ def uniqnum():
 uniq=uniqnum()
 class Tartan:
     
-    def stripeGradient(self, ident, color, width=2, prime=False):
+    def stripeGradient(self, ident, color, width=None, prime=False):
+        if width is None:
+            width=self.unit
         elt=self.dom.createElement("linearGradient")
         elt.setAttribute("id", ident)
         stop=self.dom.createElement("stop")
@@ -123,7 +125,7 @@ class Tartan:
             self.gradientCache[(color,bool(prime))]=g.getAttribute('id')
             return g.getAttribute('id')
 
-    def __init__(self, width, height, unit=2):
+    def __init__(self, width=100, height=100, unit=2):
         impl=getDOMImplementation()
         self.dom=impl.createDocument(None,'svg',None)
         d=self.dom.documentElement
@@ -131,6 +133,7 @@ class Tartan:
         self.height=height
         self.unit=unit
         self.gradientCache={}
+        self.svg=self.dom.documentElement
         d.setAttribute("xmlns","http://www.w3.org/2000/svg")
         d.setAttribute("xmlns:xlink","http://www.w3.org/1999/xlink")
         d.setAttribute("height","10cm") # ??
@@ -138,20 +141,57 @@ class Tartan:
         d.setAttribute("viewBox", "0 0 %d %d"%(width, height))
         d.setAttribute("x","0")
         d.setAttribute("y","0")
-
         self.re=re.compile(r'([a-zA-Z]+)(\d+)')
-
         self.defs=self.dom.createElement("defs")
         d.appendChild(self.defs)
-        
+        self.horiz=[]
+        self.vert=[]
 
-t=Tartan(100,100)
-r=t.makeHorizStripe("B10")
-r.setAttribute('y','20')
-t.dom.documentElement.appendChild(r)
+    def addHorizStripe(self, spec):
+        # just collect the stripes, mkay?
+        self.horiz.append(spec)
 
-r=t.makeVertStripe("G20")
-r.setAttribute('x','20')
-t.dom.documentElement.appendChild(r)
+    def addVertStripe(self, spec):
+        self.vert.append(spec)
 
-print t.dom.toprettyxml()
+    def assembleAll(self):
+        h=0
+        i=0
+        dr= +1
+        while h<self.height:
+            strip=self.horiz[i]
+            r=self.makeHorizStripe(strip)
+            r.setAttribute('y',str(h))
+            h+=int(r.getAttribute('height'))
+            self.svg.appendChild(r)
+            if i+dr >= len(self.horiz) or i+dr < 0:
+                # I just hit the end.
+                dr *= -1
+            i+=dr
+        i=0
+        w=0
+        dr= +1
+        while w<self.width:
+            strip=self.vert[i]
+            r=self.makeVertStripe(strip)
+            r.setAttribute('x',str(w))
+            w+=int(r.getAttribute('width'))
+            self.svg.appendChild(r)
+            if i+dr >= len(self.vert) or i+dr < 0:
+                dr *= -1
+            i+=dr
+
+    def xml(self):
+        return self.svg.toprettyxml()
+
+    def symStripes(self, stripes):
+        for s in stripes.split():
+            self.addHorizStripe(s)
+            self.addVertStripe(s)
+
+t=Tartan(width=300, height=300, unit=1)
+#t.symStripes("B6 W2 BK2 W2 G10")
+t.symStripes("R96 W8 B8 BK8 R24 B8 R2 Y8")
+t.assembleAll()
+
+print t.xml()
