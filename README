@@ -1,0 +1,79 @@
+PyTartan
+
+Convert tartan threadcount specification to SVG
+
+Tartans (Scottish plaids) are  specified in terms of a "threadcount", which
+indicate the colors of the stripes and their order and thickness.  See
+http://en.wikipedia.org/wiki/Tartan#Construction and/or
+http://www.tartanregister.gov.uk/guidance.html#20 for some information.
+
+Usage:  tartan.py [-a] [-u unit] [-r reps] [-d divisor] [-R] [sett info...]
+
+Options:
+	-a:	Sett is asymmetrical.  The pattern is simply repeated over
+	and over, not reflected about the pivots as usual.
+
+	-u: 	Make the width of the slantwise stripes representing the
+        threads equal to _unit_.  Larger numbers (like 5-10) will result
+        in larger images with more "hound's-tooth" look to them.  Not
+        really necessary since SVGs are scalable.  Default: 2
+
+	-r:    	Repeat the pattern _reps_ times horizontally and
+        vertically.  Default: 2
+
+	-d:	Divide all the widths by _divisor_, e.g. since threadcounts
+        are supposed to be all even numbers, many are given essentially
+        multiplied by two.  Also not all that necessary since SVGs are
+        scalable.  Default: 1
+
+	-R:	*Ignore* the threadcount on the command line, and instead
+        read in standard input.  The input is taken to be of the form that
+        www.tartanregister.gov.uk sends back in email when you request a
+        threadcount.  The program will find the "Threadcount:" line for the
+        actual threadcount, and will parse the "Pallett:" line for
+        assigning the precise RBG colors to the thread colors.  All the
+        rest of the input is ignored.
+
+The threadcount is expected to consist of one or more specifiers of color
+and width.  Color is usually indicated by one or two letters (sometimes
+more), and then comes the width in numbers.  So W6 means a white stripe six
+threads wide, and B18 means a blue stripe 18 threads wide.  There may be
+spaces between the strips, but there should not be whitespace between a
+color and its number.  Standard color-abbreviations are understood, among
+them:
+	W:	White
+	K:	Black
+	R:	Red
+	G:	Green
+	B:	Blue
+	Y:	Yellow
+	N:	Grey
+	T:	Tan
+	DB:	Dark Blue
+	LG:	Light Green
+
+You can also specify the color precisely by using the form (#rrggbb) as
+the color.  The parentheses are mandatory, as is the pound sign, and the
+six hex digits after represent, in pairs, the red, green, and blue
+components of the color.  As usual, there must be no space between the
+closing paren and the count number.  The official Tartan Registry
+accompanies each threadcount with a pallette which specifies the shade (in
+#rrggbb form) for each color abbreviation used; these are processed by the
+program using the (#rrggbb) form for the colors, internally.
+
+Threadcounts are usually symmetrical.  That is, reading across (for
+example), you should find stripe#1, stripe#2, ... , stripe#(n-1), stripe#n,
+which would then be followed by stripe#(n-1), stripe#(n-2),...,stripe#2,
+stripe#1, stripe#2, stripe#3, etc.  That is, the sequence is reversed for
+each repeat.  Note that the end ("pivot") stripes are not generally
+repeated.  If you use the -a option, the threadcount is used
+asymmetrically, repeating from stripe#1 to stripe#n over and over with no
+reversals.  Asymmetrical tartans exist in the Tartan Registry, but as yet I
+have not seen that they indicate them at all in the threadcounts they send
+back.
+
+There is currently no way to specify different patterns for the warp and
+the weft of the tartan.
+
+Acknowledgement: Inspiration for this program was from xtartan by Jim
+McBeath, as modified by Joseph Shelby.
