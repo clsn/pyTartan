@@ -72,8 +72,10 @@ reversals.  Asymmetrical tartans exist in the Tartan Registry, but as yet I
 have not seen that they indicate them at all in the threadcounts they send
 back.
 
-There is currently no way to specify different patterns for the warp and
-the weft of the tartan.
+To have different counts for warp vs weft, separate them with the '|'
+character (which will have to be escaped from the shell!), e.g.
+
+tartan.py -r 4 'B20 W30 | W30 R16' 
 
 Acknowledgement: Inspiration for this program was from xtartan by Jim
 McBeath, as modified by Joseph Shelby.

@@ -106,17 +106,14 @@ class Tartan:
         return wid
     
     def makeHorizStripe(self, spec):
-        m=self.re.match(spec)
-        if not m:
-            return None         # ??
         r=self.dom.createElement('rect')
         # x & y should be set elsewhere?
         # y should anyway.
         r.setAttribute("x","0")
         r.setAttribute("width","100%")
-        h=self.convertWidth(int(m.group(2)))
+        h=self.convertWidth(int(spec[1]))
         r.setAttribute("height",str(h))
-        gID=self.gradID(self.str2color(m.group(1)),prime=False)
+        gID=self.gradID(self.str2color(spec[0]),prime=False)
         r.setAttribute("fill","url(#%s)"%gID)
         return r
 
@@ -124,15 +121,12 @@ class Tartan:
     # the svg at the last minute?
 
     def makeVertStripe(self, spec):
-        m=self.re.match(spec)
-        if not m:
-            return None
         r=self.dom.createElement('rect')
         r.setAttribute('y','0')
         r.setAttribute('height','100%')
-        w=self.convertWidth(int(m.group(2)))
+        w=self.convertWidth(int(spec[1]))
         r.setAttribute('width',str(w))
-        gID=self.gradID(self.str2color(m.group(1)),prime=True)
+        gID=self.gradID(self.str2color(spec[0]),prime=True)
         r.setAttribute('fill','url(#%s)'%gID)
         return r
         
@@ -180,10 +174,17 @@ class Tartan:
     
     def addHorizStripe(self, spec):
         # just collect the stripes, mkay?
-        self.horiz.append(spec)
+        # Handle either parsed stripes (tuples) or unparsed (strings)
+        if isinstance(spec,str):
+            self.horiz.append(self.re.match(spec).groups())
+        else:
+            self.horiz.append(spec)
 
     def addVertStripe(self, spec):
-        self.vert.append(spec)
+        if isinstance(spec,str):
+            self.vert.append(self.re.match(spec).groups())
+        else:
+            self.vert.append(spec)
 
     def assembleAll(self):
         for align in ('h', 'w'):
@@ -222,19 +223,25 @@ class Tartan:
         return self.svg.toprettyxml()
 
     def symStripes(self, stripes):
-        for s in re.findall(r'(?:[A-Za-z]+|\(.*?\))\d+',stripes):
+        for s in self.re.findall(stripes):
             self.addHorizStripe(s)
+            self.addVertStripe(s)
+
+    def horizStripes(self, stripes):
+        for s in self.re.findall(stripes):
+            self.addHorizStripe(s)
+
+    def vertStripes(self, stripes):
+        for s in self.re.findall(stripes):
             self.addVertStripe(s)
 
     def computeDims(self, reps=2):
         w=0
         h=0
         for strip in self.horiz:
-            m=self.re.match(strip)
-            h+=int(m.group(2))
+            h+=int(strip[1])
         for strip in self.vert:
-            m=self.re.match(strip)
-            w+=int(m.group(2))
+            w+=int(strip[1])
         if hasattr(self, 'divisor'):
             h/=self.divisor
             w/=self.divisor
@@ -309,7 +316,12 @@ if __name__=='__main__':
     t=Tartan(width=300, height=300, unit=unit, asymmetrical=asym)
     if divisor:
         t.divisor=divisor
-    t.symStripes(s)
+    hv=s.split('|',1)
+    if len(hv)>1:
+        t.horizStripes(hv[0])
+        t.vertStripes(hv[1])
+    else:
+        t.symStripes(s)
     dim=t.computeDims(reps)
     t.setdims(*dim)
     t.assembleAll()
