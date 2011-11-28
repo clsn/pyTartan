@@ -271,14 +271,26 @@ def readThreadCountInfo(unit, asym, reps, divisor):
     tar=Tartan(width=300, height=300, asymmetrical=asym, unit=unit)
     if divisor:
         tar.divisor=divisor
+    # Horiz/vert stripes are delimited in tartanregister files with a period.
+    vh=threads.split('.')
+    # The first part might be the only part.
     # Do them individually; replacing on the whole string might get caught
     # in some of the hex strings
-    thr=re.findall(r'[a-zA-Z]+\d+',threads)
-    for t in thr:
-        m=re.match(r'[a-zA-Z]+',t)
-        out=t.replace(m.group(0),'(%s)'%cols[m.group(0)])
-        tar.addHorizStripe(out)
+    if len(vh) < 2:
+        vh[1]=''
+    allstripes=[[],[]]
+    for i in [0, 1]:
+        thr=re.findall(r'[a-zA-Z]+\d+',vh[i])
+        for t in thr:
+            m=re.match(r'[a-zA-Z]+',t)
+            out=t.replace(m.group(0),'(%s)'%cols[m.group(0)])
+            allstripes[i].append(out)
+    if not vh[1]:
+        allstripes[1]=allstripes[0]
+    for out in allstripes[0]:
         tar.addVertStripe(out)
+    for out in allstripes[1]:
+        tar.addHorizStripe(out)
     dim=tar.computeDims(reps)
     tar.setdims(*dim)
     tar.assembleAll()
