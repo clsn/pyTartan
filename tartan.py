@@ -277,7 +277,7 @@ def readThreadCountInfo(unit, asym, reps, divisor):
     # Do them individually; replacing on the whole string might get caught
     # in some of the hex strings
     if len(vh) < 2:
-        vh[1]=''
+        vh.append('')
     allstripes=[[],[]]
     for i in [0, 1]:
         thr=re.findall(r'[a-zA-Z]+\d+',vh[i])
