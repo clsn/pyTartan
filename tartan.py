@@ -157,7 +157,7 @@ class Tartan:
         d.setAttribute("viewBox", "0 0 %d %d"%(width, height))
         d.setAttribute("x","0")
         d.setAttribute("y","0")
-        self.re=re.compile(r'([a-zA-Z]+|\(.*?\))(\d+)')
+        self.re=re.compile(r'([a-zA-Z]+|\(.*?\))/?(\d+)')
         self.defs=self.dom.createElement("defs")
         d.appendChild(self.defs)
         self.horiz=[]
@@ -253,21 +253,42 @@ class Tartan:
 def readThreadCountInfo(unit, asym, reps, divisor):
     # Read in and work directly from a tartanregister.gov.uk threadcount
     # response
+    # Sigh... whose format they keep changing...
     cols={}
-    for line in sys.stdin:
-        if line.startswith('Threadcount'):
+    lines=sys.stdin.readlines() # I'm going to want them all at once...
+    i=0
+    while i<len(lines):
+        line=lines[i]
+        if line.startswith('Threadcount:'):
             l=line.split(':')
-            threads=l[1].strip()
-        elif line.startswith('Pallet'):
+            # Take second field--if there is one!
+            threads=len(l)>1 and l[1].strip()
+            if not threads:     # new style: line-break after colon
+                # Take the next line
+                threads=lines[i+1]
+        elif line.startswith('Pallet:'):
             l=line.split(':')
-            pal=l[1].strip()
+            pal=len(l)>1 and l[1].strip()
+            if not pal:
+                # Take next line
+                pal=lines[i+1]
             l=pal.split(';')
             for col in l:
                 col=col.strip()
                 m=re.match(r'([A-Za-z]+)=([0-9a-fA-F]{6})',col)
-                if not m:
-                    continue
-                cols[m.group(1)]='#%s'%m.group(2)
+                if m:
+                    cols[m.group(1)]='#%s'%m.group(2)
+        elif line.startswith("Threadcount given over the full sett."):
+            # New style responses contain information about symmettry
+            # in auxiliary line.  Passed-in true asym overrides.
+            asym=True
+        # No need to check for this, it's the default
+        # elif line.startswith("Threadcount given over a half sett with full count at the pivots."):
+        #    pass                # asym=False, default
+        # Do they have a syntax for half-sett, half-count at pivots?
+        # Sigh.  Why couldn't they and I have just stuck with slashes
+        # like W/24 for pivots?
+        i+=1
 
     tar=Tartan(width=300, height=300, asymmetrical=asym, unit=unit)
     if divisor:
@@ -281,7 +302,7 @@ def readThreadCountInfo(unit, asym, reps, divisor):
         vh.append('')
     allstripes=[[],[]]
     for i in [0, 1]:
-        thr=re.findall(r'[a-zA-Z]+\d+',vh[i])
+        thr=re.findall(r'[a-zA-Z]+/?\d+',vh[i])
         for t in thr:
             m=re.match(r'[a-zA-Z]+',t)
             out=t.replace(m.group(0),'(%s)'%cols[m.group(0)])
