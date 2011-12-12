@@ -263,6 +263,7 @@ def readThreadCountInfo(unit, asym, reps, divisor):
             pal=l[1].strip()
             l=pal.split(';')
             for col in l:
+                col=col.strip()
                 m=re.match(r'([A-Za-z]+)=([0-9a-fA-F]{6})',col)
                 if not m:
                     continue
