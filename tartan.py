@@ -11,7 +11,9 @@ def uniqnum():
         
 uniq=uniqnum()
 class Tartan:
-    
+
+    herring=False
+
     def stripeGradient(self, ident, color, width=None, prime=False):
         if width is None:
             width=self.unit
@@ -218,6 +220,14 @@ class Tartan:
                         continue
                     dr *= -1
                 i+=dr
+        if self.herring:
+            h=self.dom.createElement("rect")
+            h.setAttribute("x","0")
+            h.setAttribute("y","0")
+            h.setAttribute("width","100%")
+            h.setAttribute("height","100%")
+            h.setAttribute("fill","url(herringbone.svg#herringbone)")
+            self.svg.appendChild(h)
 
     def xml(self):
         return self.svg.toprettyxml()
@@ -250,7 +260,7 @@ class Tartan:
         return (w*reps, h*reps)
 
 
-def readThreadCountInfo(unit, asym, reps, divisor):
+def readThreadCountInfo(tar):
     # Read in and work directly from a tartanregister.gov.uk threadcount
     # response
     # Sigh... whose format they keep changing...
@@ -275,13 +285,13 @@ def readThreadCountInfo(unit, asym, reps, divisor):
             l=pal.split(';')
             for col in l:
                 col=col.strip()
-                m=re.match(r'([A-Za-z]+)=([0-9a-fA-F]{6})',col)
+                m=re.match(r'([A-Za-z]+)=#?([0-9a-fA-F]{6})',col)
                 if m:
                     cols[m.group(1)]='#%s'%m.group(2)
         elif line.startswith("Threadcount given over the full sett."):
             # New style responses contain information about symmettry
             # in auxiliary line.  Passed-in true asym overrides.
-            asym=True
+            tar.asymmetrical=True
         # No need to check for this, it's the default
         # elif line.startswith("Threadcount given over a half sett with full count at the pivots."):
         #    pass                # asym=False, default
@@ -290,7 +300,7 @@ def readThreadCountInfo(unit, asym, reps, divisor):
         # like W/24 for pivots?
         i+=1
 
-    tar=Tartan(width=300, height=300, asymmetrical=asym, unit=unit)
+    # tar=Tartan(width=300, height=300, asymmetrical=asym, unit=unit)
     if divisor:
         tar.divisor=divisor
     # Horiz/vert stripes are delimited in tartanregister files with a period.
@@ -313,12 +323,7 @@ def readThreadCountInfo(unit, asym, reps, divisor):
         tar.addVertStripe(out)
     for out in allstripes[1]:
         tar.addHorizStripe(out)
-    dim=tar.computeDims(reps)
-    tar.setdims(*dim)
-    tar.assembleAll()
-    
-    print tar.xml()
-
+    return tar
 
 
 if __name__=='__main__':
@@ -326,11 +331,14 @@ if __name__=='__main__':
     import sys
     from getopt import getopt
 
-    (opts, args)=getopt(sys.argv[1:],'d:r:u:aR')
+    (opts, args)=getopt(sys.argv[1:],'d:r:u:aR',["herringbone"])
     divisor=None
     reps=2
     unit=2
     asym=False
+    herring=False
+    t=None
+    readinput=False
     # print str(opts)
     for (k,v) in opts:
         if k.endswith('d'):
@@ -341,23 +349,30 @@ if __name__=='__main__':
             unit=int(v)
         elif k.endswith('a'):
             asym=True
+        elif k.endswith('herringbone'):
+            herring=True
+            unit=4
         elif k.endswith('R'):
-            readThreadCountInfo(unit, asym, reps, divisor)
-            exit(0)
-    s=" ".join(args)
-    if not s:
-        s="R96 W8 B8 BK8 R24 B8 R2 Y8"
+            readinput=True
     t=Tartan(width=300, height=300, unit=unit, asymmetrical=asym)
+    if readinput:
+        readThreadCountInfo(t)
+    else:
+        s=" ".join(args)
+        if not s:
+            s="R96 W8 B8 BK8 R24 B8 R2 Y8"
+        hv=s.split('|',1)
+        if len(hv)>1:
+            t.horizStripes(hv[0])
+            t.vertStripes(hv[1])
+        else:
+            t.symStripes(s)
     if divisor:
         t.divisor=divisor
-    hv=s.split('|',1)
-    if len(hv)>1:
-        t.horizStripes(hv[0])
-        t.vertStripes(hv[1])
-    else:
-        t.symStripes(s)
     dim=t.computeDims(reps)
     t.setdims(*dim)
+    t.herring=herring
+    print "<!-- %s -->"%t.asymmetrical
     t.assembleAll()
     
     print t.xml()
