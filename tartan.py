@@ -8,6 +8,10 @@ def uniqnum():
     while True:
         count+=1
         yield count
+
+def setAtts(self, attribs):
+    for k in attribs:
+        self.setAttribute(k, attribs[k])
         
 uniq=uniqnum()
 class Tartan:
@@ -115,8 +119,7 @@ class Tartan:
         r.setAttribute("width","100%")
         h=self.convertWidth(int(spec[1]))
         r.setAttribute("height",str(h))
-        gID=self.gradID(self.str2color(spec[0]),prime=False)
-        r.setAttribute("fill","url(#%s)"%gID)
+        r.setAttribute("fill","%s"%self.str2color(spec[0]))
         return r
 
     # Maybe I should assemble an array of stripes and throw them into
@@ -128,20 +131,9 @@ class Tartan:
         r.setAttribute('height','100%')
         w=self.convertWidth(int(spec[1]))
         r.setAttribute('width',str(w))
-        gID=self.gradID(self.str2color(spec[0]),prime=True)
-        r.setAttribute('fill','url(#%s)'%gID)
+        r.setAttribute('fill','%s'%self.str2color(spec[0]))
         return r
         
-    def gradID(self, color, prime=False):
-        if self.gradientCache.has_key((color,bool(prime))):
-            return self.gradientCache[(color,bool(prime))]
-        else:
-            g=self.stripeGradient(color=color, ident='grad%04d'%uniq.next(), 
-                                  prime=prime)
-            self.defs.appendChild(g)
-            self.gradientCache[(color,bool(prime))]=g.getAttribute('id')
-            return g.getAttribute('id')
-
     def __init__(self, width=100, height=100, unit=2, asymmetrical=False):
         impl=getDOMImplementation()
         self.dom=impl.createDocument(None,'svg',None)
@@ -149,7 +141,6 @@ class Tartan:
         self.width=width
         self.height=height
         self.unit=unit
-        self.gradientCache={}
         self.svg=self.dom.documentElement
         self.asymmetrical=asymmetrical
         d.setAttribute("xmlns","http://www.w3.org/2000/svg")
@@ -161,7 +152,22 @@ class Tartan:
         d.setAttribute("y","0")
         self.re=re.compile(r'([a-zA-Z]+|\(.*?\))/?(\d+)')
         self.defs=self.dom.createElement("defs")
+        self.defs.__class__.setAtts=setAtts
         d.appendChild(self.defs)
+        self.horelt=self.dom.createElement("g")
+        self.horelt.setAttribute("id","horizStripes")
+        d.appendChild(self.horelt)
+        self.vertelt=self.dom.createElement("g")
+        self.vertelt.setAttribute("id","vertStripes")
+        d.appendChild(self.vertelt)
+        grating=self.stripeGradient("grategrad", "white", self.unit)
+        self.defs.appendChild(grating)
+        gmask=self.dom.createElement("mask")
+        gmask.setAttribute("id","grating")
+        gmaskr=self.dom.createElement("rect")
+        gmaskr.setAtts({"width":"100%", "height":"100%", "x":"0", "y":"0", "fill":"url(#grategrad)"})
+        self.defs.appendChild(gmask)
+        gmask.appendChild(gmaskr)
         self.horiz=[]
         self.vert=[]
 
@@ -198,11 +204,13 @@ class Tartan:
                 array.reverse() # We build these stripes the wrong way!
                 # the y axis is upside-down or something.
                 lim=self.height
+                place=self.horelt
             else:
                 maker=self.makeVertStripe
                 setattrib='x'
                 getattrib='width'
                 array=self.vert
+                place=self.vertelt
                 lim=self.width
             i=0
             a=0
@@ -212,7 +220,7 @@ class Tartan:
                 r=maker(strip)
                 r.setAttribute(setattrib,str(a))
                 a+=int(r.getAttribute(getattrib))
-                self.svg.appendChild(r)
+                place.appendChild(r)
                 if i+dr >= len(array) or i+dr < 0:
                     # I just hit the end.
                     if self.asymmetrical:
@@ -220,6 +228,7 @@ class Tartan:
                         continue
                     dr *= -1
                 i+=dr
+        self.vertelt.setAttribute("mask", "url(#grating)")
         if self.herring:
             h=self.dom.createElement("rect")
             h.setAttribute("x","0")
