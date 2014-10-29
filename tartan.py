@@ -201,7 +201,7 @@ class Tartan:
                 setattrib='y'
                 getattrib='height'
                 array=self.horiz
-                array.reverse() # We build these stripes the wrong way!
+                #array.reverse() # We build these stripes the wrong way!
                 # the y axis is upside-down or something.
                 lim=self.height
                 place=self.horelt
@@ -261,6 +261,11 @@ class Tartan:
             h+=int(strip[1])
         for strip in self.vert:
             w+=int(strip[1])
+	if not self.asymmetrical:
+	    h -= int(self.horiz[0][1])/2
+	    h -= int(self.horiz[-1][1])/2
+	    w -= int(self.vert[0][1])/2
+	    w -= int(self.vert[-1][1])/2
         if hasattr(self, 'divisor'):
             h/=self.divisor
             w/=self.divisor
@@ -340,7 +345,8 @@ if __name__=='__main__':
     import sys
     from getopt import getopt
 
-    (opts, args)=getopt(sys.argv[1:],'d:r:u:aR',["herringbone"])
+    (opts, args)=getopt(sys.argv[1:],'d:r:u:aR',
+                        ["herringbone", "transparent"])
     divisor=None
     reps=2
     unit=2
@@ -348,6 +354,7 @@ if __name__=='__main__':
     herring=False
     t=None
     readinput=False
+    transparent=False
     # print str(opts)
     for (k,v) in opts:
         if k.endswith('d'):
@@ -361,6 +368,8 @@ if __name__=='__main__':
         elif k.endswith('herringbone'):
             herring=True
             unit=4
+        elif k.endswith('transparent'):
+            transparent=True
         elif k.endswith('R'):
             readinput=True
     t=Tartan(width=300, height=300, unit=unit, asymmetrical=asym)
@@ -381,7 +390,9 @@ if __name__=='__main__':
     dim=t.computeDims(reps)
     t.setdims(*dim)
     t.herring=herring
-    print "<!-- %s -->"%t.asymmetrical
     t.assembleAll()
+    if transparent:
+        t.vertelt.removeAttribute("mask")
+        t.vertelt.setAttribute("opacity", "0.5")
     
     print t.xml()
