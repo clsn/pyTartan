@@ -24,28 +24,28 @@ class Tartan:
         elt=self.dom.createElement("linearGradient")
         elt.setAttribute("id", ident)
         stop=self.dom.createElement("stop")
-        stop.setAttribute("id","stop%04d"%uniq.next())
+        stop.setAttribute("id","stop%04d" % next(uniq))
         stop.setAttribute("offset", "0")
         stop.setAttribute("stop-color",color)
         stop.setAttribute("stop-opacity", "0")
         elt.appendChild(stop)
         
         stop=self.dom.createElement("stop")
-        stop.setAttribute("id","stop%04d"%uniq.next())
+        stop.setAttribute("id","stop%04d" % next(uniq))
         stop.setAttribute("offset","50%")
         stop.setAttribute("stop-color",color)
         stop.setAttribute("stop-opacity","0")
         elt.appendChild(stop)
         
         stop=self.dom.createElement("stop")
-        stop.setAttribute("id","stop%04d"%uniq.next())
+        stop.setAttribute("id","stop%04d" % next(uniq))
         stop.setAttribute("offset","50%")
         stop.setAttribute("stop-color",color)
         stop.setAttribute("stop-opacity","1")
         elt.appendChild(stop)
         
         stop=self.dom.createElement("stop")
-        stop.setAttribute("id","stop%04d"%uniq.next())
+        stop.setAttribute("id","stop%04d" % next(uniq))
         stop.setAttribute("offset","100%")
         stop.setAttribute("stop-color",color)
         stop.setAttribute("stop-opacity","1")
@@ -59,7 +59,7 @@ class Tartan:
         elt.setAttribute("spreadMethod","repeat")
         if prime:
             elt.setAttribute("gradientTransform","translate(-%f,0)"%width)
-            
+
         return elt
 
     @staticmethod
@@ -261,11 +261,11 @@ class Tartan:
             h+=int(strip[1])
         for strip in self.vert:
             w+=int(strip[1])
-	if not self.asymmetrical:
-	    h -= int(self.horiz[0][1])/2
-	    h -= int(self.horiz[-1][1])/2
-	    w -= int(self.vert[0][1])/2
-	    w -= int(self.vert[-1][1])/2
+        if not self.asymmetrical:
+            h -= int(self.horiz[0][1])/2
+            h -= int(self.horiz[-1][1])/2
+            w -= int(self.vert[0][1])/2
+            w -= int(self.vert[-1][1])/2
         if hasattr(self, 'divisor'):
             h/=self.divisor
             w/=self.divisor
@@ -395,4 +395,4 @@ if __name__=='__main__':
         t.vertelt.removeAttribute("mask")
         t.vertelt.setAttribute("opacity", "0.5")
     
-    print t.xml()
+    print(t.xml())
